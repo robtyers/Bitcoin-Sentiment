@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>SignalR Real-time Chart Example</title>
+    <script src="js/Chart.js"></script>
+    <script src="js/signalr-client.js"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function() {
+            // Real-time Chart Example written by Simon Brunel (Plunker: https://plnkr.co/edit/Imxwl9OQJuaMepLNy6ly?p=info)
+            var samples = 100;
+            var speed = 250;
+            var priceValues = [];
+            var sentimentValues = [];
+            var labels = [];
+            var charts = [];
+            var value = 0;
+
+            priceValues.length = samples;
+            sentimentValues.length = samples;
+            labels.length = samples;
+            priceValues.fill(0);
+            sentimentValues.fill(0);
+            labels.fill(0);
+
+            var chart = new Chart(document.getElementById("chart"),
+                {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Price',
+                                data: priceValues,
+                                backgroundColor: 'rgb(255,0,0)',
+                                borderColor: 'rgb(255,0,0)',
+                                fill: false,
+                                yAxisID: 'y-axis-1'
+                            },
+                            {
+                                label: 'Sentiment',
+                                data: sentimentValues,
+                                backgroundColor: 'rgb(0,255,0)',
+                                borderColor: 'rgb(0,255,0)',
+                                fill: false,
+                                yAxisID: 'y-axis-2',
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        hoverMode: 'index',
+                        animation: {
+                            duration: speed * 1.5,
+                            easing: 'linear'
+                        },
+                        legend: false,
+                        scales: {
+                            xAxes: [
+                                {
+                                    display: false
+                                }
+                            ],
+                            yAxes: [
+                                {
+                                    ticks: {
+                                        max: 5200,
+                                        min: 4800
+                                    },
+                                    position: 'left',
+                                    id: 'y-axis-1',
+                                },
+                                {
+                                    ticks: {
+                                        max: 4,
+                                        min: 0
+                                    },
+                                    position: 'right',
+                                    id: 'y-axis-2',
+                                }
+                            ]
+                        }
+                    }
+                });
+
+            var priceConnection = new signalR.HubConnection("price");
+
+            priceConnection.on('Broadcast',
+                function(sender, message) {
+                    priceValues.push(message.value);
+                    priceValues.shift();
+
+                    chart.update();
+                });
+
+            priceConnection.start();
+
+            var sentimentConnection = new signalR.HubConnection("sentiment");
+
+            sentimentConnection.on('Broadcast',
+                function(sender, message) {
+                    sentimentValues.push(message.value);
+                    sentimentValues.shift();
+
+                    chart.update();
+                });
+
+            sentimentConnection.start();
+        });
+    </script>
+</head>
+<body>
+    <canvas id="chart" style="width: 75%;"></canvas>
+</body>
+</html>
