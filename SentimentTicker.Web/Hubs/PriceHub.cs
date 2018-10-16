@@ -14,7 +14,7 @@ namespace SentimentTicker.Web.Hubs
                 // Do not Broadcast to Caller:
                 .AllExcept(new[] { Context.ConnectionId })
                 // Broadcast to all connected clients:
-                .InvokeAsync("Broadcast", sender, price);
+                .SendAsync("Broadcast", sender, price);
         }
     }
 }

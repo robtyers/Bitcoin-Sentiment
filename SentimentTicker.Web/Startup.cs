@@ -29,8 +29,8 @@ namespace SentimentTicker.Web
             app.UseCors("Everything");
             app.UseSignalR(routes =>
             {
-                routes.MapHub<PriceHub>("price");
-                routes.MapHub<SentimentHub>("sentiment");
+                routes.MapHub<PriceHub>("/price");
+                routes.MapHub<SentimentHub>("/sentiment");
             });
         }
     }

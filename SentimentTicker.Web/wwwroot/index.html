@@ -4,17 +4,17 @@
     <meta charset="utf-8" />
     <title>SignalR Real-time Chart Example</title>
     <script src="js/Chart.js"></script>
-    <script src="js/signalr-client.js"></script>
-    <script type="text/javascript">
-        document.addEventListener('DOMContentLoaded', function() {
+    <script src="js/signalr.js"></script>
+    <script type="text/javascript">document.addEventListener('DOMContentLoaded', function() {
             // Real-time Chart Example written by Simon Brunel (Plunker: https://plnkr.co/edit/Imxwl9OQJuaMepLNy6ly?p=info)
-            var samples = 100;
+            var samples = 250;
             var speed = 250;
             var priceValues = [];
             var sentimentValues = [];
             var labels = [];
             var charts = [];
-            var value = 0;
+            var lastPrice;
+            var lastSentiment;
 
             priceValues.length = samples;
             sentimentValues.length = samples;
@@ -64,8 +64,8 @@
                             yAxes: [
                                 {
                                     ticks: {
-                                        max: 5200,
-                                        min: 4800
+                                        max: 10000,
+                                        min: 0
                                     },
                                     position: 'left',
                                     id: 'y-axis-1',
@@ -83,31 +83,57 @@
                     }
                 });
 
-            var priceConnection = new signalR.HubConnection("price");
+
+            const priceConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/price")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
 
             priceConnection.on('Broadcast',
                 function(sender, message) {
-                    priceValues.push(message.value);
-                    priceValues.shift();
+                    lastPrice = message.value;
+                    //priceValues.push(lastPrice);
+                    //priceValues.shift();
 
-                    chart.update();
+                    //chart.options.scales.yAxes[0].ticks.min = Math.floor((lastPrice - 5) / 10) * 10;
+                    //chart.options.scales.yAxes[0].ticks.max = Math.ceil((lastPrice + 5) / 10) * 10;
+                    //chart.update();
+
+                    updateChart();
                 });
 
-            priceConnection.start();
+            priceConnection.start().catch(err => console.error(err.toString()));
 
-            var sentimentConnection = new signalR.HubConnection("sentiment");
+            const sentimentConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/sentiment")
+                .configureLogging(signalR.LogLevel.Information)
+                .build();
 
             sentimentConnection.on('Broadcast',
                 function(sender, message) {
-                    sentimentValues.push(message.value);
-                    sentimentValues.shift();
+                    lastSentiment = message.value;
+                    //sentimentValues.push(lastSentiment);
+                    //sentimentValues.shift();
 
-                    chart.update();
+                    //chart.update();
+
+                    updateChart();
                 });
 
-            sentimentConnection.start();
-        });
-    </script>
+            function updateChart() {
+                sentimentValues.push(lastSentiment);
+                sentimentValues.shift();
+
+                priceValues.push(lastPrice);
+                priceValues.shift();
+
+                chart.options.scales.yAxes[0].ticks.min = Math.floor((lastPrice - 5) / 10) * 10;
+                chart.options.scales.yAxes[0].ticks.max = Math.ceil((lastPrice + 5) / 10) * 10;
+
+                chart.update();
+            };
+            sentimentConnection.start().catch(err => console.error(err.toString()));
+});</script>
 </head>
 <body>
     <canvas id="chart" style="width: 75%;"></canvas>

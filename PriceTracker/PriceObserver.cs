@@ -3,7 +3,6 @@ using System.Threading;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using SentimentTicker.Models;
 
 namespace PriceTracker
 {
